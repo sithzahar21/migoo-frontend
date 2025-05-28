@@ -1,72 +1,58 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
-import fs from 'fs/promises';
-import svgr from '@svgr/rollup';
+import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-import { viteStaticCopy } from 'vite-plugin-static-copy';
+import svgr from '@svgr/rollup';
+import fs from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-// import svgr from 'vite-plugin-svgr'
-
-// https://vitejs.dev/config/
 
 export default defineConfig({
-    base: '/dashboard/',
-    resolve: {
-        alias: {
-            src: resolve(__dirname, 'src'),
+  base: '/dashboard/',
+  resolve: {
+    alias: {
+      src: resolve(__dirname, 'src'),
+    },
+  },
+  build: {
+    outDir: 'dist', // Ensure consistent output for Amplify
+  },
+  esbuild: {
+    loader: 'jsx',
+    include: /src\/.*\.jsx?$/,
+    exclude: [],
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      plugins: [
+        {
+          name: 'load-js-files-as-jsx',
+          setup(build) {
+            build.onLoad(
+              { filter: /src\\.*\.js$/ },
+              async (args) => ({
+                loader: 'jsx',
+                contents: await fs.readFile(args.path, 'utf8'),
+              })
+            );
+          },
         },
+      ],
     },
-    
-    esbuild: {
-        loader: 'jsx',
-        include: /src\/.*\.jsx?$/,
-        exclude: [],
-    },
-    optimizeDeps: {
-        esbuildOptions: {
-            plugins: [
-                {
-                    name: 'load-js-files-as-jsx',
-                    setup(build) {
-                        build.onLoad(
-                            { filter: /src\\.*\.js$/ },
-                            async (args) => ({
-                                loader: 'jsx',
-                                contents: await fs.readFile(args.path, 'utf8'),
-                            })
-                        );
-                    },
-                },
-            ],
-        },
-    },
-
-server: {
+  },
+  server: {
     proxy: {
       '/api': {
-        target: 'http://my-flask-api-env.eba-stpnimm3.eu-north-1.elasticbeanstalk.com',
+        target: 'https://api.migooai.com',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '/api'),
       },
     },
   },
-    
-    // plugins: [react(),svgr({
-    //   exportAsDefault: true
-    // })],
-
-    plugins: [svgr(), 
-        react(),
-    viteStaticCopy({
-    targets: [
-      {
-        src: 'public/_redirects',
-        dest: '.', // copies to root of dist/
-      },
-    ],
-  }),],
+  plugins: [
+    react(),
+    svgr(),
+    // Remove viteStaticCopy if not copying actual static assets for Amplify
+  ],
 });

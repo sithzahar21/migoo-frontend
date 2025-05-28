@@ -1,19 +1,35 @@
 version: 1
-frontend:
-  phases:
-    preBuild:
-      commands:
-        - cd website && npm install && cd ..
-        - cd dashboard && npm install && cd ..
-    build:
-      commands:
-        - cd website && npm run build && cd ..
-        - cd dashboard && npm run build && cd ..
-  artifacts:
-    baseDirectory: website/dist
-    files:
-      - '**/*'
-  cache:
-    paths:
-      - node_modules/**
+applications:
+  - appRoot: website
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**
 
+  - appRoot: dashboard
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: dist
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**
